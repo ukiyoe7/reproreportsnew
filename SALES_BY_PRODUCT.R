@@ -1,4 +1,4 @@
-
+## TEST
 
 sales_cli_vlx_2021 <- dbGetQuery(con2,"
 WITH CLI AS (SELECT DISTINCT CLIEN.CLICODIGO,CLINOMEFANT
