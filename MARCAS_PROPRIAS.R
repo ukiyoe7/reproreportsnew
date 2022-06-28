@@ -1,0 +1,44 @@
+## Bibliotecas necessárias
+
+library(DBI)
+library(dplyr)
+library(reshape2)
+library(googlesheets4)
+
+
+## conexão com banco replica 
+
+con2 <- dbConnect(odbc::odbc(), "reproreplica")
+
+
+
+library(tidyverse)
+
+#CURRENT MONTH
+
+marcasproprias <- dbGetQuery(con2,"
+     SELECT DISTINCT C.CLICODIGO COD_REPRO, 
+             GCLCODIGO GRUPO,
+              CLIRAZSOCIAL RAZAO_SOCIAL,
+               SETOR,
+                P.PROCODIGO PRODUTO_CODIGO,
+                 PRODESCRICAO PRODUTO_DESCRICAO,
+                  P.TPLCODIGO LINHA_CODIGO  
+     FROM PRODU P
+     INNER JOIN (SELECT PROCODIGO FROM NGRUPOS WHERE GRCODIGO=162)A ON P.PROCODIGO=A.PROCODIGO
+     LEFT  JOIN (SELECT TPLCODIGO,CLICODIGO FROM TPLCLI)B ON P.TPLCODIGO=B.TPLCODIGO
+     INNER  JOIN (SELECT DISTINCT C.CLICODIGO,CLIRAZSOCIAL,GCLCODIGO,SETOR FROM CLIEN C
+     LEFT JOIN (SELECT CLICODIGO, ZODESCRICAO SETOR FROM ENDCLI E
+     INNER JOIN (SELECT ZOCODIGO,ZODESCRICAO FROM ZONA WHERE ZOCODIGO IN(20,21,22,23,24,28))Z ON E.ZOCODIGO=Z.ZOCODIGO
+     WHERE ENDFAT='S') ED ON C.CLICODIGO=ED.CLICODIGO
+     WHERE CLICLIENTE='S' AND C.CLICODIGO<>124 AND GCLCODIGO=233)C ON B.CLICODIGO=C.CLICODIGO
+     WHERE PROSITUACAO='A'
+    ")  
+
+
+marcasproprias %>% distinct(LINHA_CODIGO) %>% as.list() %>% write.csv2(.,file = "mp.csv")
+
+View(marcasproprias)
+
+
+
