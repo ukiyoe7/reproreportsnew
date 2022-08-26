@@ -10,9 +10,9 @@ library(glue)
 residual <- range_read("15Or0FoTTDZBBSGuH_zPGYO9jD3QV97QNYtt9336u30w",sheet = "DADOS" , range = "B:C") %>% 
              mutate(HASH=paste0(ID1,ID2))
 
-residual_id1 <- residual %>% select(ID1) %>% rename("ID_PEDIDO"="ID1")
+residual_id1 <- residual %>% select(ID1) %>% rename("ID_PEDIDO"="ID1") %>% filter(!is.na(.))
 
-residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2")
+residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2") %>% filter(!is.na(.))
  
  residual_promo1_sql <- glue_sql("
     WITH PED AS (SELECT ID_PEDIDO,PEDVRTOTAL FROM PEDID WHERE 
@@ -122,8 +122,29 @@ residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2")
  
  residual_promo2 <-  dbGetQuery(con2,residual_promo2_sql)
  
-  
-inner_join(id_pedido1,residual_id1,by="ID_PEDIDO")
+ 
+ residual_id1_sheets <- inner_join(residual_promo1 %>% 
+                                     mutate(ID_PEDIDO=as.character(ID_PEDIDO)),residual %>% 
+                                       rename("ID_PEDIDO"="ID1") %>%
+                                         mutate(ID_PEDIDO=trimws(ID_PEDIDO)),by="ID_PEDIDO")
+
+ 
+ 
+ residual_id2_sheets <- inner_join(residual_promo2 %>% 
+                          mutate(ID_PEDIDO=as.character(ID_PEDIDO)),residual %>% 
+                           rename("ID_PEDIDO"="ID2") %>%
+                             mutate(ID_PEDIDO=trimws(ID_PEDIDO)),by="ID_PEDIDO") 
+ 
+ 
+ 
+residual_sheets <- left_join(residual_id1_sheets,residual_id2_sheets, by="HASH")
+
+
+sheet_write(residual_sheets,ss="15Or0FoTTDZBBSGuH_zPGYO9jD3QV97QNYtt9336u30w",sheet="RESIDUAL")
+
+
+
+
 
 
 
