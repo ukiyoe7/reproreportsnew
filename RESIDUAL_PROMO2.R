@@ -13,6 +13,12 @@ residual <- range_read("15Or0FoTTDZBBSGuH_zPGYO9jD3QV97QNYtt9336u30w",sheet = "D
 residual_id1 <- residual %>% select(ID1) %>% rename("ID_PEDIDO"="ID1") %>% filter(!is.na(.))
 
 residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2") %>% filter(!is.na(.))
+
+
+
+test_pedid <- dbGetQuery(con2,"SELECT ID_PEDIDO,PEDSITPED FROM PEDID WHERE PEDDTEMIS>= DATEADD(-360 DAY TO CURRENT_DATE)")
+
+inner_join(residual_id1,test_pedid,by="ID_PEDIDO") %>% View(.)
  
  residual_promo1_sql <- glue_sql("
     WITH PED AS (SELECT ID_PEDIDO,PEDVRTOTAL FROM PEDID WHERE 
@@ -69,6 +75,8 @@ residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2") %>% filte
  
  View(residual_promo1)
  
+ anti_join(residual_id1,residual_promo1,by="ID_PEDIDO")
+ 
  
  residual_promo2_sql <- glue_sql("
     WITH PED AS (SELECT ID_PEDIDO,PEDVRTOTAL FROM PEDID WHERE 
@@ -123,6 +131,9 @@ residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2") %>% filte
  residual_promo2 <-  dbGetQuery(con2,residual_promo2_sql)
  
  
+ 
+ 
+ 
  residual_id1_sheets <- inner_join(residual_promo1 %>% 
                                      mutate(ID_PEDIDO=as.character(ID_PEDIDO)),residual %>% 
                                        rename("ID_PEDIDO"="ID1") %>%
@@ -137,10 +148,10 @@ residual_id2 <- residual %>% select(ID2) %>% rename("ID_PEDIDO"="ID2") %>% filte
  
  
  
-residual_sheets <- left_join(residual_id1_sheets,residual_id2_sheets, by="HASH")
+residual_sheets <- left_join(residual_id1_sheets,residual_id2_sheets, by="HASH") 
 
 
-sheet_write(residual_sheets,ss="15Or0FoTTDZBBSGuH_zPGYO9jD3QV97QNYtt9336u30w",sheet="RESIDUAL")
+sheet_write(residual_sheets %>% .[,-10],ss="15Or0FoTTDZBBSGuH_zPGYO9jD3QV97QNYtt9336u30w",sheet="RESIDUAL")
 
 
 
